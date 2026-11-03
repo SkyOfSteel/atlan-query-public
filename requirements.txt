@@ -1,0 +1,2 @@
+pyatlan==11.4.0
+python-dotenv==1.2.3

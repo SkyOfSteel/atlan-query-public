@@ -1,0 +1,11 @@
+{
+  "connection_qualified_name": "default/redshift/1700000000",
+  "database_qualified_name": "default/redshift/1700000000/analytics",
+  "connection_label": "my-redshift-connection",
+  "entity_code_attribute_id": "<internal ID of the custom metadata attribute that holds the entity code>",
+  "entity_code_attribute_label": "Entity code",
+  "domain_names": ["Domain A", "Domain B"],
+  "landing_schema_prefix": "raw_",
+  "table_prefixes": ["", "mnl_"],
+  "asset_types": ["Table", "View", "Column"]
+}
