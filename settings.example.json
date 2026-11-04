@@ -7,5 +7,8 @@
   "domain_names": ["Domain A", "Domain B"],
   "landing_schema_prefix": "raw_",
   "table_prefixes": ["", "mnl_"],
-  "asset_types": ["Table", "View", "Column"]
+  "asset_types": ["Table", "View", "Column"],
+  "leave_alone": {
+    "Example Product": "maintained by hand: has its own output ports and readme"
+  }
 }

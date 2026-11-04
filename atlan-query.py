@@ -21,6 +21,8 @@ table called abc_orders matches ABC, but a column called fabc_id does not.
 Products whose rules don't fit (Match all at the top, a missing block, a stray
 underscore) are rebuilt from the template. Products the template can't express
 (two entity codes, three or more blocks, another connection) are skipped and listed.
+Products listed under leave_alone in settings.json are never touched; every run
+lists them as skipped.
 
 Atlan stores a product's rules twice: the rule-builder filter the UI draws, and
 the search DSL that actually selects assets. This script writes both, so they
@@ -82,6 +84,7 @@ LANDING_SCHEMA_PREFIX = SETTINGS.get("landing_schema_prefix", "raw_")
 TABLE_PREFIXES = SETTINGS.get("table_prefixes", [""])   # an entity's tables are named <prefix><code>_..., e.g. abc_x or mnl_abc_x
 ASSET_TYPES = SETTINGS.get("asset_types", ["Table", "View", "Column"])
 BACKUP_DIR = Path("backups")
+LEAVE_ALONE = SETTINGS.get("leave_alone", {})           # product name (exactly as in Atlan) -> why it is maintained by hand
 
 
 # ---------------------------------------------------------------- the filter
@@ -107,10 +110,18 @@ def hierarchy_row(schema_qns):
              "isMuted": False,
              "label": CONNECTION_LABEL}
 
+def prefixes_for(code):
+    """Return the table prefixes that apply to a code; a prefix equal to the code itself (e.g. abc_ for the code ABC) is left out."""
+    prefixes = []
+    for prefix in TABLE_PREFIXES:
+        if prefix != code.lower() + "_":
+            prefixes.append(prefix)
+    return prefixes
+
 def name_patterns(code):
     """Return the table-name starts the name rule looks for, e.g. ['/abc_', '/mnl_abc_']."""
     patterns = []
-    for prefix in TABLE_PREFIXES:
+    for prefix in prefixes_for(code):
         patterns.append("/" + prefix + code.lower() + "_")
     return patterns
 
@@ -188,8 +199,8 @@ def listed_schemas(row):
         return []
     schemas = []
     for qn in value.get("attributeValue", "").split(";"):
-        if qn == DATABASE_QN:
-            continue                      # the UI always puts the database first; skip it
+        if qn == DATABASE_QN or not qn:
+            continue                      # the UI always puts the database first; an empty piece is a stray ';'
         if not qn.startswith(DATABASE_QN + "/"):
             raise SkipProduct(f"a block lists a schema in another database: {qn}")
         schemas.append(qn)
@@ -355,7 +366,7 @@ def find_products(client, domain_names):
 def find_raw_schemas(client, code):
     """Find the landing schemas that hold tables or views named <prefix><code>_..., sorted."""
     schemas = set()                       # a set keeps each schema once, however many tables it has
-    for prefix in TABLE_PREFIXES:
+    for prefix in prefixes_for(code):
         request = (
             FluentSearch()
             .where(CompoundQuery.active_assets())
@@ -425,6 +436,8 @@ def describe(schema_qns):
 
 def process_product(client, product, only, apply, force=False):
     """Rebuild one product's rules, print what would change, and write them if apply is True."""
+    if product.name in LEAVE_ALONE:
+        raise SkipProduct(f"on the leave-alone list: {LEAVE_ALONE[product.name]}")
     if not product.data_product_assets_playbook_filter or not product.data_product_assets_d_s_l:
         raise SkipProduct("it has no rules stored")
     old_filter = json.loads(product.data_product_assets_playbook_filter)

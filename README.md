@@ -59,6 +59,7 @@ Then copy `settings.example.json` to `settings.json` (also git-ignored) and fill
 | `landing_schema_prefix` | Prefix of the schemas block 1 searches (default `raw_`) |
 | `table_prefixes` | Table-name prefixes that also belong to an entity: `""` for `abc_…`, `"mnl_"` for `mnl_abc_…` (default `[""]`) |
 | `asset_types` | Asset types the rules select (default Table, View, Column) |
+| `leave_alone` | Products the tool must never touch, by exact name, each with the reason it is maintained by hand (default none) |
 
 The easiest way to find the connection, database and attribute values is to open a product whose rule is already set up correctly and look at its stored rule, the `dataProductAssetsPlaybookFilter` attribute (for example through the pyatlan SDK). The connection's qualified name and label, the database's qualified name, and the entity-code attribute's ID (the row's `key`) and label all appear there.
 
@@ -112,6 +113,7 @@ The tool only rewrites products it can read with confidence. It skips the rest, 
 | `it has N blocks; the template has 2` | Remove the extra blocks in the UI, then re-run. |
 | `block 1 matches 'x' but the DEC says Y` | The name rule and the entity code disagree, which usually means a typo. Fix whichever one is wrong. |
 | `a block points at a different connection` / `has no connection/database/schema row` | Check the product. If its rows are simply wrong, run `--only CODE --force` to rebuild it onto the configured connection. |
+| `on the leave-alone list: …` | The product is listed under `leave_alone` in `settings.json` on purpose. Nothing to do. |
 | `its search DSL doesn't have the expected shape` | The stored search query isn't laid out the way the tool expects. The tool won't guess, so check the product by hand. |
 
 `--force` only works together with `--only`, so it can never affect more than one product at a time.
